@@ -1,0 +1,571 @@
+<title>Langkah Linear 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,700&display=swap">
+<style>
+/* Layout: satu kolom ≤560px. Kartu persamaan di atas panggung 3D, tombol aksi di zona jempol di bawahnya. Token dari docs/DESIGN.md §2 */
+:root{
+  --bg:#FAFAF7; --surface:#FFFFFF; --stage:#ECEFE8; --line:#D9DDD3;
+  --text:#1F2328; --muted:#5B6470; --primary:#2457C5; --on-primary:#FFFFFF;
+  --var:#2457C5; --on-var:#FFFFFF; --const:#6B4FA0; --on-const:#FFFFFF;
+  --sign:#C2410C; --sign-bg:#FBE6D8;
+  --ok:#1A7F45; --ok-bg:#E2F2E7; --warn:#A15C00; --warn-bg:#FAEED6;
+  --metal:#8E938A; --axis:#3B4048;
+  --font:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#14161A; --surface:#1E2127; --stage:#191C21; --line:#30353D;
+    --text:#E8EAED; --muted:#A3ABB5; --primary:#7FA6FF; --on-primary:#0D1830;
+    --var:#7FA6FF; --on-var:#0D1830; --const:#B9A3E8; --on-const:#1C1430;
+    --sign:#FDBA74; --sign-bg:#3A2617;
+    --ok:#6EE7A0; --ok-bg:#13301F; --warn:#FBBF24; --warn-bg:#352812;
+    --metal:#6C727A; --axis:#C9CED6;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#14161A; --surface:#1E2127; --stage:#191C21; --line:#30353D;
+  --text:#E8EAED; --muted:#A3ABB5; --primary:#7FA6FF; --on-primary:#0D1830;
+  --var:#7FA6FF; --on-var:#0D1830; --const:#B9A3E8; --on-const:#1C1430;
+  --sign:#FDBA74; --sign-bg:#3A2617;
+  --ok:#6EE7A0; --ok-bg:#13301F; --warn:#FBBF24; --warn-bg:#352812;
+  --metal:#6C727A; --axis:#C9CED6;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{
+  color:var(--text); font-family:var(--font); font-size:17px; line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:16px 40px;
+}
+.wrap{max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:14px}
+header{display:flex; flex-direction:column; gap:4px}
+.brand{font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700}
+h1{font-size:23px; line-height:1.25; margin:0; text-wrap:balance}
+.lede{margin:0; color:var(--muted); font-size:15px; max-width:60ch}
+
+.tabs{display:grid; grid-template-columns:1fr 1fr; gap:4px; background:var(--stage); padding:4px; border-radius:14px}
+.tabs button{min-height:48px; border:0; border-radius:10px; background:transparent; color:var(--muted);
+  font:700 15px/1.2 var(--font); cursor:pointer; padding:6px 8px}
+.tabs button[aria-selected="true"]{background:var(--surface); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.14)}
+
+.panel{display:flex; flex-direction:column; gap:12px}
+.eq{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:12px 16px; display:flex; flex-direction:column; gap:2px}
+.eq-label{font-size:12px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; font-weight:700}
+.eq-main{font-size:28px; font-weight:700; display:flex; flex-wrap:wrap; align-items:center; column-gap:.32em; row-gap:4px;
+  font-variant-numeric:tabular-nums; min-height:44px}
+.eq-sub{font-size:16px; color:var(--muted); font-variant-numeric:tabular-nums; min-height:24px; display:flex; flex-wrap:wrap; align-items:center; gap:.3em}
+.v{color:var(--var)}
+.k{color:var(--const)}
+.op{color:var(--muted); font-weight:400}
+.xbox{display:inline-block; border:2px solid currentColor; border-radius:5px; padding:0 .12em; line-height:1.05; font-style:italic; margin-left:.04em}
+.s{display:inline-grid; place-items:center; min-width:1.55em; height:1.55em; padding:0 .2em; border-radius:999px;
+  background:var(--sign-bg); color:var(--sign); font-weight:700}
+.s.bad{background:var(--warn-bg); color:var(--warn)}
+.s.flip{animation:flip .7s ease}
+@keyframes flip{0%{transform:scale(1) rotateY(0)}50%{transform:scale(1.25) rotateY(90deg)}100%{transform:scale(1) rotateY(0)}}
+
+.stage{position:relative; height:clamp(270px, 50vh, 400px); background:var(--stage); border-radius:16px; overflow:hidden}
+.stage canvas{display:block; width:100%; height:100%; touch-action:pan-y; cursor:grab}
+.labels{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.lbl{position:absolute; left:0; top:0; font-size:14px; font-weight:700; white-space:nowrap; color:var(--text);
+  background:var(--surface); border:1px solid var(--line); padding:0 7px; border-radius:7px; font-variant-numeric:tabular-nums; will-change:transform}
+.lbl.tick{background:none; border:0; color:var(--muted); font-weight:400; font-size:13px; padding:0}
+.lbl.side{background:none; border:0; color:var(--muted); font-size:13px}
+.legend{position:absolute; left:10px; top:10px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; max-width:calc(100% - 72px)}
+.chip{display:flex; align-items:center; gap:6px; font-size:13px; line-height:1.3; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:3px 10px 3px 7px}
+.sw{display:inline-block; flex:none}
+.sw.x{background:var(--var); width:9px; height:17px; border-radius:2px}
+.sw.u{background:var(--const); width:12px; height:12px; border-radius:2px}
+.sw.a{background:var(--const); width:12px; height:12px; border-radius:50%}
+.sw.b{background:var(--const); width:10px; height:10px; transform:rotate(45deg); margin:0 1px}
+.sw.ax{background:var(--sign); width:3px; height:15px; opacity:.7}
+.reset{position:absolute; right:8px; top:8px; width:48px; height:48px; border-radius:12px; border:1px solid var(--line);
+  background:var(--surface); color:var(--text); font:700 20px/1 var(--font); cursor:pointer}
+.hint3d{position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px; color:var(--muted); pointer-events:none}
+.nogl{margin:0; padding:24px; text-align:center; color:var(--muted)}
+
+.fb{margin:0; padding:12px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--line); font-size:16px; display:flex; gap:10px; align-items:flex-start}
+.fb .ic{flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:700; margin-top:1px;
+  background:var(--stage); color:var(--muted)}
+.fb[data-tone="ok"]{background:var(--ok-bg); border-color:transparent}
+.fb[data-tone="ok"] .ic{background:var(--ok); color:var(--surface)}
+.fb[data-tone="warn"]{background:var(--warn-bg); border-color:transparent}
+.fb[data-tone="warn"] .ic{background:var(--warn); color:var(--surface)}
+
+.actions{display:grid; gap:8px}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.btn{min-height:52px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--text);
+  font:700 16px/1.25 var(--font); padding:10px 14px; cursor:pointer; text-align:center}
+.btn.primary{background:var(--primary); border-color:var(--primary); color:var(--on-primary)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.38; cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible,.kbtn:focus-visible,.reset:focus-visible{outline:3px solid var(--sign); outline-offset:2px}
+
+.kwrap{display:flex; flex-direction:column; gap:6px}
+.klabel{font-size:15px; color:var(--muted)}
+.klabel b{color:var(--text)}
+.ks{display:grid; grid-template-columns:repeat(6,1fr); gap:6px}
+.kbtn{min-height:52px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--const);
+  font:700 18px/1 var(--font); cursor:pointer; font-variant-numeric:tabular-nums}
+.kbtn[aria-pressed="true"]{background:var(--const); border-color:var(--const); color:var(--on-const)}
+.kbtn:disabled{cursor:wait}
+
+.q{background:var(--surface); border:1.5px solid var(--sign); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px}
+.q p{margin:0; font-weight:700}
+.q .opts{display:grid; gap:8px}
+.q .btn{text-align:left; font-weight:400}
+.q .btn[data-picked="ok"]{border-color:var(--ok); background:var(--ok-bg)}
+.q .btn[data-picked="no"]{border-color:var(--warn); background:var(--warn-bg)}
+
+.trail h2{font-size:13px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:0 0 4px}
+.log{margin:0; padding-left:1.5em; color:var(--muted); font-size:15px; font-variant-numeric:tabular-nums; display:flex; flex-direction:column; gap:2px}
+.log li:last-child{color:var(--text)}
+footer{font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:6px}
+@media (prefers-reduced-motion: reduce){ .s.flip{animation:none} }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="brand">Langkah Linear · Prototipe 3D</span>
+    <h1>Lihat sendiri mengapa langkahnya benar</h1>
+    <p class="lede">Uji coba visual 3D untuk PLSV dan PtLSV. Persamaan di atas selalu berubah bersama benda 3D. Geser ke samping untuk memutar sedikit.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Pilih visual">
+    <button role="tab" id="tabA" aria-controls="panelA" aria-selected="true">Timbangan &amp; blok</button>
+    <button role="tab" id="tabB" aria-controls="panelB" aria-selected="false">Garis bilangan berputar</button>
+  </div>
+
+  <!-- ============ PANEL A: TIMBANGAN + BLOK ALJABAR ============ -->
+  <section class="panel" id="panelA" role="tabpanel" aria-labelledby="tabA">
+    <div class="eq" aria-live="polite">
+      <span class="eq-label">Persamaan</span>
+      <div class="eq-main" id="eqA"></div>
+      <div class="eq-sub" id="eqSubA"></div>
+    </div>
+    <div class="stage" id="stageA">
+      <div class="labels"></div>
+      <div class="legend">
+        <span class="chip"><i class="sw x"></i>balok = <b>x</b></span>
+        <span class="chip"><i class="sw u"></i>kubus = <b>1</b></span>
+      </div>
+      <button class="reset" type="button" aria-label="Kembalikan sudut pandang">↺</button>
+      <span class="hint3d">geser ke samping untuk memutar</span>
+    </div>
+    <p class="fb" id="fbA" data-tone="info"><span class="ic">i</span><span class="t"></span></p>
+    <div class="actions">
+      <button class="btn primary" id="btnBoth" type="button">Ambil 1 kubus dari kedua ruas</button>
+      <button class="btn" id="btnLeft" type="button">Ambil 1 kubus dari ruas kiri saja</button>
+      <button class="btn primary" id="btnUndo" type="button" hidden>Kembalikan kubus ke ruas kiri</button>
+      <button class="btn" id="btnDiv" type="button">Bagi kedua ruas dengan 2</button>
+      <button class="btn ghost" id="btnNewA" type="button">Soal baru</button>
+    </div>
+    <div class="trail">
+      <h2>Jejak langkah</h2>
+      <ol class="log" id="logA"></ol>
+    </div>
+  </section>
+
+  <!-- ============ PANEL B: GARIS BILANGAN BERPUTAR ============ -->
+  <section class="panel" id="panelB" role="tabpanel" aria-labelledby="tabB" hidden>
+    <div class="eq" aria-live="polite">
+      <span class="eq-label">Pernyataan</span>
+      <div class="eq-main" id="eqB"></div>
+      <div class="eq-sub" id="eqSubB"></div>
+    </div>
+    <div class="stage" id="stageB">
+      <div class="labels"></div>
+      <div class="legend">
+        <span class="chip"><i class="sw a"></i>titik A</span>
+        <span class="chip"><i class="sw b"></i>titik B</span>
+        <span class="chip"><i class="sw ax"></i>poros di 0</span>
+      </div>
+      <button class="reset" type="button" aria-label="Kembalikan sudut pandang">↺</button>
+      <span class="hint3d">geser ke samping untuk memutar</span>
+    </div>
+    <div class="kwrap">
+      <span class="klabel" id="kLabel">Kalikan kedua ruas dengan <b>k</b> =</span>
+      <div class="ks" role="group" aria-labelledby="kLabel" id="ks"></div>
+    </div>
+    <p class="fb" id="fbB" data-tone="info"><span class="ic">i</span><span class="t"></span></p>
+    <div class="q" id="qB" hidden>
+      <p>Setelah dikali bilangan negatif, bagaimana posisi titik A dan B?</p>
+      <div class="opts">
+        <button class="btn opt" type="button" id="opt1" data-ok="0">Tetap: B masih di kanan A</button>
+        <button class="btn opt" type="button" id="opt2" data-ok="1">Berbalik: B sekarang di kiri A</button>
+        <button class="btn opt" type="button" id="opt3" data-ok="0">A dan B bertemu di titik 0</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="btnNewB" type="button">Ganti bilangan A dan B</button>
+    </div>
+  </section>
+
+  <footer>Prototipe desain untuk diuji ke siswa. Tidak menyimpan data. Dibuat dengan Three.js r128.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+const root=document.documentElement;
+const css=n=>getComputedStyle(root).getPropertyValue(n).trim();
+const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+const MINUS='−';
+const fmt=n=>n<0?MINUS+Math.abs(n):String(n);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const $=id=>document.getElementById(id);
+
+function say(el,tone,html){ el.dataset.tone=tone; el.querySelector('.ic').textContent=tone==='ok'?'✓':tone==='warn'?'!':'i'; el.querySelector('.t').innerHTML=html; }
+
+/* ---------- WebGL check ---------- */
+let hasGL=false;
+try{ const c=document.createElement('canvas'); hasGL=!!(window.THREE && window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl'))); }catch(e){ hasGL=false; }
+
+/* ---------- tween + on-demand render ---------- */
+const tweens=[]; const views=[]; let raf=0; let active=null;
+function kick(){ if(!raf) raf=requestAnimationFrame(frame); }
+function tween(obj,to,ms,onUpdate){
+  return new Promise(res=>{
+    const from={}; for(const k in to) from[k]=obj[k];
+    tweens.push({obj,from,to,ms:reduce.matches?1:ms,t0:performance.now(),res,onUpdate}); kick();
+  });
+}
+function frame(now){
+  raf=0;
+  for(let i=tweens.length-1;i>=0;i--){
+    const t=tweens[i]; const p=clamp((now-t.t0)/t.ms,0,1);
+    const e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+    for(const k in t.to) t.obj[k]=t.from[k]+(t.to[k]-t.from[k])*e;
+    if(t.onUpdate) t.onUpdate();
+    if(p>=1){ tweens.splice(i,1); t.res(); }
+  }
+  if(active) active.render();
+  if(tweens.length) raf=requestAnimationFrame(frame);
+}
+
+/* ---------- view factory: renderer, kamera tetap, rotasi terbatas, label HTML ---------- */
+function makeView(stage,opt){
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.setClearColor(0x000000,0);
+  stage.prepend(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(32,1,0.1,200);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x9aa0a6,0.85));
+  const dl=new THREE.DirectionalLight(0xffffff,0.7); dl.position.set(4,10,7); scene.add(dl);
+  const pivot=new THREE.Group(); scene.add(pivot);
+  const layer=stage.querySelector('.labels');
+  const labels=[], themed=[], hooks=[]; let w=0,h=0; const tmp=new THREE.Vector3();
+  const view={
+    pivot, stage,
+    mat(token,extra){ const m=new THREE.MeshStandardMaterial(Object.assign({roughness:.55,metalness:.05},extra||{})); themed.push([m,token]); return m; },
+    label(obj,off,cls,text){ const el=document.createElement('div'); el.className='lbl '+(cls||''); el.textContent=text||''; layer.appendChild(el); const L={el,obj,off:off||new THREE.Vector3()}; labels.push(L); return L; },
+    onTheme(f){ hooks.push(f); },
+    theme(){ themed.forEach(([m,t])=>m.color.set(css(t))); hooks.forEach(f=>f()); },
+    resize(){
+      w=stage.clientWidth; h=stage.clientHeight; if(!w||!h) return;
+      renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+      const t=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+      const d=Math.max(opt.halfW/(t*camera.aspect),opt.halfH/t)*1.06;
+      camera.position.copy(opt.target).addScaledVector(opt.dir.clone().normalize(),d); camera.lookAt(opt.target);
+    },
+    render(){
+      if(!w) return;
+      renderer.render(scene,camera);
+      for(const L of labels){
+        L.obj.getWorldPosition(tmp); tmp.add(L.off); tmp.project(camera);
+        L.el.style.transform=`translate(${((tmp.x+1)/2*w).toFixed(1)}px,${((1-tmp.y)/2*h).toFixed(1)}px) translate(-50%,-50%)`;
+      }
+    }
+  };
+  new ResizeObserver(()=>{ view.resize(); if(active===view) kick(); }).observe(stage);
+  const cv=renderer.domElement; let drag=null;
+  cv.addEventListener('pointerdown',e=>{ drag={x:e.clientX,r:pivot.rotation.y}; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove',e=>{ if(!drag) return; pivot.rotation.y=clamp(drag.r+(e.clientX-drag.x)*0.006,-0.44,0.44); kick(); });
+  const end=()=>{ drag=null; }; cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+  stage.querySelector('.reset').addEventListener('click',()=>tween(pivot.rotation,{y:0},450));
+  views.push(view); return view;
+}
+
+function faceTex(w,h,bg,fg,txt,size,italic){
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+  g.fillStyle=bg; g.fillRect(0,0,w,h);
+  g.fillStyle=fg; g.font=`${italic?'italic ':''}700 ${size}px "Atkinson Hyperlegible", system-ui, sans-serif`;
+  g.textAlign='center'; g.textBaseline='middle'; g.fillText(txt,w/2,h/2+size*.04);
+  return new THREE.CanvasTexture(c);
+}
+
+/* ================= A: TIMBANGAN + BLOK ALJABAR ================= */
+function buildBalance(){
+  const V=makeView($('stageA'),{target:new THREE.Vector3(0,2.35,0),halfW:5.55,halfH:2.35,dir:new THREE.Vector3(0,.5,1)});
+  const P=V.pivot;
+  const mMetal=V.mat('--metal',{metalness:.25,roughness:.45});
+  const PIV_Y=2.2, L=3.6, LIFT=.55;
+
+  const base=new THREE.Mesh(new THREE.BoxGeometry(2.4,.18,1.1),mMetal); base.position.y=.09; P.add(base);
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,PIV_Y,16),mMetal); post.position.y=PIV_Y/2+.1; P.add(post);
+  const beam=new THREE.Group(); beam.position.y=PIV_Y; P.add(beam);
+  beam.add(new THREE.Mesh(new THREE.BoxGeometry(2*L+.3,.16,.2),mMetal));
+  const needle=new THREE.Mesh(new THREE.BoxGeometry(.06,.75,.06),V.mat('--sign')); needle.position.y=.45; beam.add(needle);
+  const hub=new THREE.Mesh(new THREE.SphereGeometry(.2,20,14),V.mat('--sign')); hub.position.y=PIV_Y; P.add(hub);
+
+  function mkPan(){
+    const g=new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.32,.14,40),mMetal));
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,LIFT,10),mMetal); stem.position.y=-LIFT/2; g.add(stem);
+    const items=new THREE.Group(); items.position.y=.07; g.add(items);
+    P.add(g); return {g,items,list:[]};
+  }
+  const panL=mkPan(), panR=mkPan();
+  V.label(panL.g,new THREE.Vector3(0,-.55,1.2),'side','ruas kiri');
+  V.label(panR.g,new THREE.Vector3(0,-.55,1.2),'side','ruas kanan');
+
+  const tilt={t:0};
+  function applyTilt(){
+    beam.rotation.z=tilt.t; const c=Math.cos(tilt.t), s=Math.sin(tilt.t);
+    panL.g.position.set(-L*c,PIV_Y-L*s+LIFT,0); panR.g.position.set(L*c,PIV_Y+L*s+LIFT,0);
+  }
+  applyTilt();
+
+  // materi blok: sisi balok x bertekstur "x", kubus bertekstur "1"
+  const xSide=new THREE.MeshStandardMaterial({roughness:.5}), xTop=V.mat('--var',{roughness:.5});
+  const uMat=new THREE.MeshStandardMaterial({roughness:.5});
+  const xMats=[xSide,xSide,xTop,xTop,xSide,xSide];
+  V.onTheme(()=>{
+    [xSide,uMat].forEach(m=>{ if(m.map) m.map.dispose(); });
+    xSide.map=faceTex(96,224,css('--var'),css('--on-var'),'x',80,true);
+    uMat.map=faceTex(96,96,css('--const'),css('--on-const'),'1',60,false);
+    xSide.needsUpdate=true; uMat.needsUpdate=true;
+  });
+  const gX=new THREE.BoxGeometry(.42,1,.42), gU=new THREE.BoxGeometry(.38,.38,.38);
+  const SL=[]; for(let r=0;r<3;r++) for(let c=0;c<5;c++) SL.push([(c-2)*.44,(r-1)*.44]);
+
+  function positions(pan){
+    const out=new Map(); const xs=pan.list.filter(i=>i.t==='x'), us=pan.list.filter(i=>i.t==='u');
+    xs.forEach((it,i)=>out.set(it,[SL[i][0],.5,SL[i][1]]));
+    const free=SL.slice(xs.length);
+    us.forEach((it,j)=>{ const s=free[j%free.length]; out.set(it,[s[0],.19+Math.floor(j/free.length)*.39,s[1]]); });
+    return out;
+  }
+  function layout(pan,anim){
+    const ps=[]; positions(pan).forEach((p,it)=>{ if(anim) ps.push(tween(it.m.position,{x:p[0],y:p[1],z:p[2]},450)); else it.m.position.set(p[0],p[1],p[2]); });
+    return Promise.all(ps);
+  }
+  function add(pan,t){ const m=new THREE.Mesh(t==='x'?gX:gU,t==='x'?xMats:uMat); const it={t,m}; pan.list.push(it); pan.items.add(m); return it; }
+  function clear(pan){ pan.list.forEach(i=>pan.items.remove(i.m)); pan.list=[]; }
+  function vanish(pan,it){
+    return Promise.all([tween(it.m.position,{y:it.m.position.y+1.1},420),tween(it.m.scale,{x:.01,y:.01,z:.01},420)]).then(()=>pan.items.remove(it.m));
+  }
+  function removeLastU(pan){
+    for(let i=pan.list.length-1;i>=0;i--) if(pan.list[i].t==='u'){ const it=pan.list.splice(i,1)[0]; return vanish(pan,it); }
+    return Promise.resolve();
+  }
+  const count=pan=>{ let x=0,u=0; pan.list.forEach(i=>i.t==='x'?x++:u++); return {x,u}; };
+
+  let a0,b0,c0,xv,busy=false,balanced=true,done=false,bridged=false; let log=[];
+  const fb=$('fbA');
+
+  function side(x,u){
+    const parts=[];
+    if(x) parts.push(`<span class="v">${x>1?x:''}<span class="xbox">x</span></span>`);
+    if(u){ if(parts.length) parts.push('<span class="op">+</span>'); parts.push(`<span class="k">${u}</span>`); }
+    if(!parts.length) parts.push('<span class="k">0</span>');
+    return parts.join('');
+  }
+  const plain=(x,u,c)=>`${x?(x>1?x:'')+'x':''}${x&&u?' + ':''}${u||(!x?'0':'')} = ${c}`;
+
+  function show(){
+    const l=count(panL), r=count(panR);
+    $('eqA').innerHTML=`${side(l.x,l.u)}<span class="s ${balanced?'':'bad'}">${balanced?'=':'≠'}</span>${side(r.x,r.u)}`;
+    $('eqSubA').textContent=balanced?'Timbangan seimbang: kedua ruas sama berat.':'Timbangan miring: kedua ruas tidak sama berat lagi.';
+    $('btnBoth').disabled=busy||!balanced||done||l.u===0||r.u===0;
+    $('btnLeft').hidden=!balanced; $('btnLeft').disabled=busy||done||l.u===0;
+    $('btnUndo').hidden=balanced; $('btnUndo').disabled=busy;
+    $('btnDiv').textContent=`Bagi kedua ruas dengan ${Math.max(l.x,2)}`;
+    $('btnDiv').disabled=busy||!balanced||done||l.u>0||l.x<2;
+    $('btnNewA').disabled=busy;
+    $('logA').innerHTML=log.map(s=>`<li>${s}</li>`).join('');
+  }
+  function tiltTo(){
+    const l=count(panL), r=count(panR); const d=(l.x*xv+l.u)-(r.x*xv+r.u);
+    const t=d===0?0:Math.sign(d)*Math.min(.08+Math.abs(d)*.04,.28);
+    return tween(tilt,{t},650,applyTilt);
+  }
+  function guide(){
+    const l=count(panL), r=count(panR);
+    if(l.u===0 && l.x===1){
+      done=true;
+      say(fb,'ok',`Selesai. Satu balok x seimbang dengan ${r.u} kubus, jadi <b>x = ${r.u}</b>. Cek: ${a0} × ${r.u} + ${b0} = ${c0} ✓`);
+    } else if(l.u===0){
+      let msg=`Di ruas kiri tinggal ${l.x} balok x. Bagi kedua ruas menjadi ${l.x} kelompok sama banyak, supaya tersisa satu x.`;
+      if(!bridged){ msg+=`<br>Mengambil ${b0} kubus dari kedua ruas inilah yang biasa disebut “+${b0} pindah ruas menjadi ${MINUS}${b0}”.`; bridged=true; }
+      say(fb,'info',msg);
+    } else {
+      say(fb,'info',`Ruas kiri masih punya ${l.u} kubus. Ambil kubus dari kedua ruas sampai di kiri tinggal balok x.`);
+    }
+    show();
+  }
+  function newProblem(first){
+    clear(panL); clear(panR);
+    if(first){ a0=2; xv=4; b0=3; } else { a0=rnd(2,3); xv=rnd(1,5); b0=rnd(1,4); }
+    c0=a0*xv+b0;
+    for(let i=0;i<a0;i++) add(panL,'x'); for(let i=0;i<b0;i++) add(panL,'u'); for(let i=0;i<c0;i++) add(panR,'u');
+    layout(panL,false); layout(panR,false);
+    tilt.t=0; applyTilt(); balanced=true; done=false; bridged=false;
+    log=[`Mulai: ${plain(a0,b0,c0)}`];
+    say(fb,'info','Tujuan: tinggal satu balok x di ruas kiri. Timbangan harus tetap seimbang di setiap langkah.');
+    show(); kick();
+  }
+
+  $('btnBoth').addEventListener('click',async()=>{
+    busy=true; show();
+    await Promise.all([removeLastU(panL),removeLastU(panR)]);
+    const l=count(panL), r=count(panR); log.push(`Kurangi 1 di kedua ruas → ${plain(l.x,l.u,r.u)}`);
+    busy=false; guide();
+  });
+  $('btnLeft').addEventListener('click',async()=>{
+    busy=true; show();
+    await removeLastU(panL); balanced=false; show(); await tiltTo(); busy=false;
+    say(fb,'warn','Ruas kanan belum diubah, jadi timbangan miring dan persamaannya tidak benar lagi. Kembalikan kubusnya, lalu ambil dari <b>kedua</b> ruas.');
+    show();
+  });
+  $('btnUndo').addEventListener('click',async()=>{
+    busy=true; show();
+    const it=add(panL,'u'); layout(panL,false); it.m.scale.set(.01,.01,.01);
+    await tween(it.m.scale,{x:1,y:1,z:1},350); balanced=true; await tiltTo(); busy=false;
+    say(fb,'info','Timbangan seimbang lagi. Sekarang ambil kubus dari kedua ruas.'); show();
+  });
+  $('btnDiv').addEventListener('click',async()=>{
+    busy=true; show();
+    const l=count(panL), r=count(panR), k=l.x, q=r.u/k;
+    const xs=panL.list.filter(i=>i.t==='x').slice(1), us=panR.list.filter(i=>i.t==='u').slice(q);
+    panL.list=panL.list.filter(i=>!xs.includes(i)); panR.list=panR.list.filter(i=>!us.includes(i));
+    await Promise.all([...xs.map(i=>vanish(panL,i)),...us.map(i=>vanish(panR,i))]);
+    await Promise.all([layout(panL,true),layout(panR,true)]);
+    log.push(`Bagi kedua ruas dengan ${k} → x = ${q}`);
+    busy=false; guide();
+  });
+  $('btnNewA').addEventListener('click',()=>newProblem(false));
+  newProblem(true);
+}
+
+/* ================= B: GARIS BILANGAN BERPUTAR ================= */
+function buildLine(){
+  const S=.32;
+  const V=makeView($('stageB'),{target:new THREE.Vector3(0,.55,0),halfW:16*S+.45,halfH:1.45,dir:new THREE.Vector3(0,.6,1)});
+  const P=V.pivot;
+  const mAxis=V.mat('--axis'), mConst=V.mat('--const');
+  P.add(new THREE.Mesh(new THREE.BoxGeometry(33*S,.07,.07),mAxis));
+  const coneG=new THREE.ConeGeometry(.1,.28,16);
+  const cr=new THREE.Mesh(coneG,mAxis); cr.rotation.z=-Math.PI/2; cr.position.x=16.5*S+.12; P.add(cr);
+  const cl=new THREE.Mesh(coneG,mAxis); cl.rotation.z=Math.PI/2; cl.position.x=-16.5*S-.12; P.add(cl);
+  const tickS=new THREE.BoxGeometry(.025,.16,.025), tickL=new THREE.BoxGeometry(.035,.32,.035);
+  for(let n=-16;n<=16;n++){
+    const big=n%5===0; const t=new THREE.Mesh(big?tickL:tickS,mAxis); t.position.x=n*S; P.add(t);
+    if(big) V.label(t,new THREE.Vector3(0,-.36,0),'tick',fmt(n));
+  }
+  const axisRod=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,1.9,10),V.mat('--sign',{transparent:true,opacity:.45}));
+  axisRod.position.y=.95; P.add(axisRod);
+
+  function pin(isA){
+    const g=new THREE.Group(); const hgt=isA?.8:1.25;
+    const stick=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,hgt,8),mConst); stick.position.y=hgt/2; g.add(stick);
+    const head=new THREE.Mesh(isA?new THREE.SphereGeometry(.17,24,16):new THREE.BoxGeometry(.26,.26,.26),mConst);
+    head.position.y=hgt+.08; if(!isA) head.rotation.z=Math.PI/4; g.add(head);
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.03,16),mConst));
+    P.add(g); return g;
+  }
+  const pinA=pin(true), pinB=pin(false);
+  const LA=V.label(pinA,new THREE.Vector3(0,1.25,0)), LB=V.label(pinB,new THREE.Vector3(0,1.72,0));
+
+  const st={mag:1,ang:0}; let p=2,q=5,k=1,busy=false,answered=false; const fb=$('fbB');
+  function apply(){
+    const c=Math.cos(st.ang), s=Math.sin(st.ang);
+    [[pinA,p],[pinB,q]].forEach(([g,v])=>{ const x=v*S*st.mag; g.position.set(x*c,0,-x*s); });
+  }
+  const K=[-3,-2,-1,1,2,3]; const ks=$('ks');
+  K.forEach(v=>{ const b=document.createElement('button'); b.type='button'; b.className='kbtn'; b.id='k'+(v<0?'m':'p')+Math.abs(v); b.textContent=fmt(v); b.dataset.k=v; b.addEventListener('click',()=>setK(v)); ks.appendChild(b); });
+  function marks(){ ks.querySelectorAll('.kbtn').forEach(b=>{ b.setAttribute('aria-pressed',String(+b.dataset.k===k)); b.disabled=busy; }); $('btnNewB').disabled=busy; }
+
+  function update(flipped){
+    const va=p*k, vb=q*k, rel=va<vb?'<':'>';
+    LA.el.textContent=`A = ${fmt(va)}`; LB.el.textContent=`B = ${fmt(vb)}`;
+    const kk=k<0?`(${fmt(k)})`:String(k);
+    if(k===1){
+      $('eqB').innerHTML=`<span class="k">${fmt(p)}</span><span class="s">&lt;</span><span class="k">${fmt(q)}</span>`;
+      $('eqSubB').textContent='Pernyataan awal: A di kiri B.';
+    } else {
+      $('eqB').innerHTML=`<span class="k">${fmt(p)} × ${kk}</span><span class="s" id="relB">${rel==='<'?'&lt;':'&gt;'}</span><span class="k">${fmt(q)} × ${kk}</span>`;
+      $('eqSubB').innerHTML=`hasilnya <span class="k">${fmt(va)}</span><span class="s">${rel==='<'?'&lt;':'&gt;'}</span><span class="k">${fmt(vb)}</span>`;
+    }
+    if(flipped){ const s=$('eqB').querySelector('.s'); if(s){ s.classList.remove('flip'); void s.offsetWidth; s.classList.add('flip'); } }
+    if(k===1){
+      say(fb,'info',`A = ${fmt(p)} ada di kiri B = ${fmt(q)}, jadi ${fmt(p)} &lt; ${fmt(q)}. Coba kalikan kedua ruas dengan bilangan positif, lalu dengan bilangan negatif.`);
+    } else if(k>0){
+      say(fb,'info',`Dikali ${k} (positif): jarak setiap titik dari 0 menjadi ${k} kali, tetapi urutan A dan B tetap. Tanda tetap &lt;.`);
+    } else if(!answered){
+      $('qB').hidden=false;
+      say(fb,'info','Garis bilangan berputar setengah putaran di titik 0. Perhatikan posisi A dan B sekarang, lalu jawab pertanyaan di bawah.');
+    } else {
+      say(fb,'ok',`Dikali ${fmt(k)} (negatif): semua titik berpindah ke sisi seberang 0. B sekarang di kiri A, jadi tanda &lt; <b>berbalik</b> menjadi &gt;.`);
+    }
+    marks();
+  }
+  async function setK(nk){
+    if(busy||nk===k) return;
+    const flipped=(nk<0)!==(k<0); k=nk; busy=true; marks();
+    LA.el.textContent='A'; LB.el.textContent='B';
+    await tween(st,{mag:Math.abs(k),ang:k<0?Math.PI:0},flipped?1100:600,apply);
+    busy=false; update(flipped);
+  }
+  document.querySelectorAll('#qB .opt').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#qB .opt').forEach(o=>o.removeAttribute('data-picked'));
+    if(b.dataset.ok==='1'){
+      b.dataset.picked='ok'; answered=true;
+      say(fb,'ok',`Tepat. Mengali dengan bilangan negatif membalik posisi semua titik terhadap 0. B yang tadinya di kanan sekarang di kiri, jadi tanda &lt; berbalik menjadi &gt;. Inilah alasan ${MINUS}2x &lt; 6 menjadi x &gt; ${MINUS}3 saat kedua ruas dibagi ${MINUS}2.`);
+    } else {
+      b.dataset.picked='no';
+      say(fb,'warn','Belum tepat. Lihat label A dan B: titik mana yang sekarang lebih ke kanan?');
+    }
+  }));
+  $('btnNewB').addEventListener('click',async()=>{
+    if(busy) return;
+    let np,nq; do{ np=rnd(-5,3); nq=rnd(np+2,5); }while(np===0&&nq===0);
+    busy=true; marks(); LA.el.textContent='A'; LB.el.textContent='B';
+    await tween(st,{mag:0.0001},350,apply);
+    p=np; q=nq; const wasNeg=k<0; k=1;
+    await tween(st,{mag:1,ang:0},600,apply);
+    busy=false; update(wasNeg);
+  });
+  apply(); update(false);
+}
+
+/* ---------- tabs, tema, mulai ---------- */
+const tabs=[$('tabA'),$('tabB')];
+function selectTab(i){
+  tabs.forEach((t,j)=>{ t.setAttribute('aria-selected',String(i===j)); $(t.getAttribute('aria-controls')).hidden=i!==j; });
+  active=views[i]||null; if(active){ active.resize(); kick(); }
+}
+tabs.forEach((t,i)=>t.addEventListener('click',()=>selectTab(i)));
+function themeAll(){ views.forEach(v=>v.theme()); kick(); }
+
+if(!hasGL){
+  document.querySelectorAll('.stage').forEach(s=>{ s.innerHTML='<p class="nogl">Perangkat ini belum mendukung tampilan 3D (WebGL). Di aplikasi nanti, bagian ini otomatis memakai gambar 2D.</p>'; });
+  document.querySelectorAll('.btn,.kbtn').forEach(b=>b.disabled=true);
+  return;
+}
+buildBalance(); buildLine();
+themeAll(); selectTab(0);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeAll);
+new MutationObserver(themeAll).observe(root,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(themeAll);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) kick(); });
+})();
+</script>

@@ -1,0 +1,20 @@
+# Konfigurasi hosting Render (Blueprint). Satu layanan: FastAPI menyajikan API + frontend.
+# Panduan: docs/DEPLOY.md
+services:
+  - type: web
+    name: langkah-linear
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: cd backend && pip install uv && uv sync --frozen --no-dev
+    startCommand: cd backend && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      # pakai Python bawaan Render, jangan unduh Python lain saat build
+      - key: UV_PYTHON_DOWNLOADS
+        value: never
+      - key: ENVIRONMENT
+        value: production

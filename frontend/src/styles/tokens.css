@@ -1,0 +1,36 @@
+/* Token desain — docs/DESIGN.md §2. Komponen hanya boleh memakai token ini. */
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("/fonts/atkinson-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("/fonts/atkinson-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("/fonts/atkinson-700-italic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+
+:root {
+  color-scheme: light;
+  --bg: #FAFAF7; --surface: #FFFFFF; --stage: #ECEFE8; --line: #D9DDD3;
+  --text: #1F2328; --muted: #5B6470; --primary: #2457C5; --on-primary: #FFFFFF;
+  --var: #2457C5; --on-var: #FFFFFF; --const: #6B4FA0; --on-const: #FFFFFF;
+  --sign: #C2410C; --sign-bg: #FBE6D8;
+  --ok: #1A7F45; --ok-bg: #E2F2E7; --warn: #A15C00; --warn-bg: #FAEED6;
+  --metal: #8E938A; --axis: #3B4048;
+  --font: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #14161A; --surface: #1E2127; --stage: #191C21; --line: #30353D;
+    --text: #E8EAED; --muted: #A3ABB5; --primary: #7FA6FF; --on-primary: #0D1830;
+    --var: #7FA6FF; --on-var: #0D1830; --const: #B9A3E8; --on-const: #1C1430;
+    --sign: #FDBA74; --sign-bg: #3A2617;
+    --ok: #6EE7A0; --ok-bg: #13301F; --warn: #FBBF24; --warn-bg: #352812;
+    --metal: #6C727A; --axis: #C9CED6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #14161A; --surface: #1E2127; --stage: #191C21; --line: #30353D;
+  --text: #E8EAED; --muted: #A3ABB5; --primary: #7FA6FF; --on-primary: #0D1830;
+  --var: #7FA6FF; --on-var: #0D1830; --const: #B9A3E8; --on-const: #1C1430;
+  --sign: #FDBA74; --sign-bg: #3A2617;
+  --ok: #6EE7A0; --ok-bg: #13301F; --warn: #FBBF24; --warn-bg: #352812;
+  --metal: #6C727A; --axis: #C9CED6;
+}
