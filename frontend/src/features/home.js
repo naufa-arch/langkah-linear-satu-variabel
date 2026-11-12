@@ -5,7 +5,12 @@ import { MODULES } from '../content/modules.js';
 export const title = 'Langkah Linear';
 
 function findAct(route) {
-  for (const m of MODULES) for (const a of m.acts) if (a.route && route && route.startsWith(a.route)) return a;
+  if (!route) return null;
+  for (const m of MODULES) for (const a of m.acts) {
+    if (a.route && (route === a.route || route.startsWith(a.route + '/') || (a.match || []).includes(route))) {
+      return { ...a, route }; // lanjutkan tepat di halaman terakhir
+    }
+  }
   return null;
 }
 function nextAct() {
@@ -36,5 +41,6 @@ export function mount(el) {
       <h2>Mau belajar apa hari ini?</h2></div>
     ${resume ? `<a class="continue" href="${resume.route}"><span class="t"><small>${findAct(s.last) ? 'Lanjutkan' : 'Mulai dari sini'}</small><b>${esc(resume.label)}</b></span><span class="arrow" aria-hidden="true">▶</span></a>` : ''}
     <ul class="map">${modules}</ul>
+    <a class="btn ghost" href="#/materi">📖 Daftar isi materi</a>
   </div>`;
 }

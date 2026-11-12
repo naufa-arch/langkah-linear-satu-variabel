@@ -23,8 +23,8 @@ Disusun agar selaras dengan model pengembangan (misalnya ADDIE). Sesuaikan jika 
 | S2 ✅ | `frontend/src/math/linear.js` (solve L1–L5, cek nilai, interval, miskonsepsi M2–M6, generator ber-seed) + `keywords.js`, diuji pytest via V8 | ✅ 34 tes lulus |
 | S3 ◐ | `mathexpr`, `numberline`, F6 tahap 1 "Contoh bertahap" (PLSV & PtLSV + cek dengan angka), Kamus kata kunci | ✅ tahap 1 · ⬜ tahap 2–4 fading |
 | S4 ◐ | F2 Timbangan + blok aljabar 3D dan F3 Balik tanda 3D (Three.js lazy, render on demand); F6 (PtLSV) | ✅ versi 3D · ⬜ fallback 2D SVG · ⬜ uji ≥ 30 fps di HP |
-| S5 | F5 Pembedah Soal Cerita + Kamus, F7 Cek Jawaban | 5 templat soal cerita berjalan |
-| S6 | Backend: model DB + Alembic, `/enroll`, `/events/batch`, `/survey/batch`; frontend: F1 Prasyarat, F8 Skala/angket, outbox + sinkronisasi | Uji mode pesawat → online: data masuk DB tanpa duplikat |
+| S5 ✅ | F5 Pembedah Soal Cerita (6 langkah, 5 templat angka acak) + Kamus, F7 Cek Jawaban; F1 Cek Prasyarat + Ulasan Kilat; F6 tahap 4 Latihan Mandiri (3 tingkat, petunjuk bertingkat, deteksi miskonsepsi) | ✅ 48 tes lulus · ⬜ uji di HP |
+| S6 | Backend: model DB + Alembic, `/enroll`, `/events/batch`, `/survey/batch`; frontend: F8 Skala/angket, outbox + sinkronisasi | Uji mode pesawat → online: data masuk DB tanpa duplikat |
 | S7 | Backend: login peneliti, kelas, ekspor CSV, ringkasan pandas; frontend: F10 dasbor peneliti | CSV terbuka benar di Excel/Sheets |
 | S8 | Poles: aksesibilitas, mode gelap, Lighthouse, keamanan (CORS, rate limit), uji di HP nyata | Lolos anggaran kinerja & daftar cek keamanan |
 

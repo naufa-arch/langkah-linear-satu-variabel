@@ -47,8 +47,9 @@ Catatan: service worker (offline) hanya aktif di `localhost` atau HTTPS, tidak a
 8. Tulis simbol dengan karakter yang benar: `−` (U+2212), `≤`, `≥`, `×`, `÷`.
 
 ## Aturan teknis — frontend
-- `src/math/linear.js` dan `src/content/keywords.js` **tidak boleh memakai `import`**, karena pytest menjalankannya di V8.
-  Setiap fungsi matematika baru wajib punya tes di `backend/tests/test_math_engine.py`.
+- File logika yang diuji di V8 (`src/math/*.js`, `src/content/keywords.js`, `src/content/stories.js`) hanya boleh memakai
+  **import satu baris dari `linear.js`**, tanpa DOM. Daftarkan file baru di `JS_FILES` (`backend/tests/test_math_engine.py`)
+  dengan urutan sesuai ketergantungan. Setiap fungsi baru wajib punya tes.
 - Tidak memakai float untuk perhitungan; gunakan bilangan bulat atau rasional `rat(n, d)`.
 - Teks materi & soal di `src/content/`, bukan di dalam logika.
 - Setiap layar adalah modul di `src/features/` yang mengekspor `title` dan `mount(el, params)`, dan mengembalikan fungsi pembersih.

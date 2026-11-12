@@ -9,7 +9,11 @@ const ROUTES = {
   'timbangan': () => import('./features/balance3d.js'),
   'balik-tanda': () => import('./features/flip3d.js'),
   'contoh': () => import('./features/example.js'),
+  'materi': () => import('./features/materi.js'),
   'kamus': () => import('./features/kamus.js'),
+  'prasyarat': () => import('./features/prereq.js'),
+  'soal-cerita': () => import('./features/story.js'),
+  'latihan': () => import('./features/practice.js'),
 };
 
 const app = document.getElementById('app');
@@ -58,6 +62,6 @@ navigate();
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('Service worker gagal didaftarkan', e));
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Service worker gagal didaftarkan', e));
   });
 }

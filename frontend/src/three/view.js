@@ -1,5 +1,5 @@
 // Fondasi adegan 3D (DESIGN §8): kamera tetap, rotasi terbatas ±25°, label HTML, render on demand.
-import * as THREE from '/vendor/three.module.min.js';
+import * as THREE from '../../vendor/three.module.min.js';
 import { tween, kick, setRender } from '../lib/tween.js';
 import { css, onThemeChange } from '../lib/dom.js';
 

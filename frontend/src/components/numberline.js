@@ -39,5 +39,25 @@ export function numberLineSVG(interval, { probe = null } = {}) {
   return `<svg class="nl" viewBox="0 0 ${W} 72" role="img" aria-label="${label}">${out.join('')}</svg>`;
 }
 
+// Garis bilangan dengan titik-titik bernama, misalnya [{ v: -2, label: 'A' }]. dots = titik penuh tanpa label (semesta bulat).
+export function pointsSVG(points, { min = -6, max = 6, dots = [] } = {}) {
+  const W = 340, pad = 20, y = 46;
+  const X = (v) => pad + ((v - min) / (max - min)) * (W - 2 * pad);
+  const out = [`<line class="axis" x1="4" y1="${y}" x2="${W - 4}" y2="${y}"/>`];
+  for (let n = min; n <= max; n++) {
+    const x = X(n).toFixed(1);
+    out.push(`<line class="tick" x1="${x}" y1="${y - 7}" x2="${x}" y2="${y + 7}"/>`);
+    out.push(`<text class="num" x="${x}" y="${y + 26}">${fmtNum(n)}</text>`);
+  }
+  for (const v of dots) out.push(`<circle class="dot" cx="${X(v).toFixed(1)}" cy="${y}" r="7"/>`);
+  for (const p of points) {
+    const x = X(p.v).toFixed(1);
+    out.push(`<circle class="pt" cx="${x}" cy="${y}" r="8"/>`);
+    out.push(`<text class="ptl" x="${x}" y="${y - 16}">${p.label}</text>`);
+  }
+  const aria = points.length ? `Titik ${points.map((p) => `${p.label} di ${fmtNum(p.v)}`).join(', ')}` : `Titik-titik ${dots.map(fmtNum).join(', ')}`;
+  return `<svg class="nl" viewBox="0 0 ${W} 84" role="img" aria-label="${aria}">${out.join('')}</svg>`;
+}
+
 export const numberLineLegend = () =>
   '<div class="nl-legend"><span><i></i>bulatan kosong = tidak termasuk</span><span><i class="full"></i>bulatan penuh = termasuk</span></div>';

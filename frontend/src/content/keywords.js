@@ -15,7 +15,7 @@ export const KEYWORDS = [
     phrases: ['lebih dari', 'melebihi', 'di atas', 'lebih besar dari'],
     example: '“Lebih dari 5 kg” → x > 5' },
   { rel: '=', sym: '=', meaning: 'tepat sama',
-    phrases: ['sama dengan', 'adalah', 'menjadi', 'hasilnya', 'jumlahnya'],
+    phrases: ['sama dengan', 'adalah', 'menjadi', 'hasilnya', 'jumlahnya', 'tinggal'],
     example: '“Jumlahnya 20” → … = 20' },
 ];
 
