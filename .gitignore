@@ -25,3 +25,18 @@ __pycache__/
 !.vscode/extensions.json
 .DS_Store
 Thumbs.db
+
+# Android (Capacitor)
+dist/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Kunci jawaban & rubrik instrumen penelitian: JANGAN di-commit (repo publik).
+# Di Render, unggah lewat Environment > Secret Files (lihat docs/DEPLOY.md).
+backend/app/data/instrumen_literasi.json

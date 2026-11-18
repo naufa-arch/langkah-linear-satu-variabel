@@ -35,7 +35,29 @@ Jika muncul jendela login GitHub, masuk dan izinkan.
 - Cek server hidup: buka `<link>/api/v1/health`, hasilnya harus `{"status":"ok",...}`.
 - Pasang di HP: buka link di Chrome Android → menu ⋮ → **Tambahkan ke layar utama** / **Instal aplikasi**.
 
+## Langkah 4 — Basis data & rahasia (wajib untuk Tutor AI dan data penelitian)
+1. Buat basis data PostgreSQL gratis di https://neon.tech (atau Supabase). Salin *connection string*-nya,
+   misalnya `postgresql://user:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`.
+2. Di Render, buka layanan `langkah-linear` → **Environment**, isi:
+   | Nama | Isi |
+   |---|---|
+   | `DATABASE_URL` | connection string dari Neon/Supabase |
+   | `DEEPSEEK_API_KEY` | kunci DeepSeek (kosongkan bila memakai Gemini) |
+   | `GEMINI_API_KEY` | kunci Gemini (cadangan) |
+   | `RESEARCHER_PASSWORD` | kata sandi dasbor peneliti |
+   | `JWT_SECRET` | dibuat otomatis oleh Render |
+3. Masih di **Environment**, bagian **Secret Files** → **Add Secret File**:
+   - Filename: `instrumen_literasi.json`
+   - Contents: salin seluruh isi berkas `backend/app/data/instrumen_literasi.json` dari laptop.
+   Berkas ini berisi kunci jawaban & rubrik, sengaja **tidak** di-commit ke GitHub (repo publik). Tanpa ini, tes literasi
+   tidak bisa dikumpulkan/dinilai di server online (server memberi pesan "Kunci instrumen literasi belum dipasang").
+4. Klik **Save, rebuild, and deploy**. Tabel basis data dibuat otomatis saat server menyala.
+5. Cek: `<link>/api/v1/health` harus berisi `"ai":true`.
+6. Salin link Render ke `REMOTE_API` di `frontend/src/config.js`, lalu buat ulang APK ([ANDROID.md](ANDROID.md)).
+
 ## Catatan
-- Belum ada database. Progres siswa masih tersimpan di HP masing-masing. Database PostgreSQL (Neon/Supabase) ditambahkan
-  di Sprint S6; **jangan** memakai SQLite di Render gratis karena datanya bisa hilang (ARCHITECTURE §7).
+- Kunci API **tidak pernah** dikirim ke HP: aplikasi memanggil `/api/v1/ai/...` di server, server yang memanggil DeepSeek/Gemini.
+- Progres siswa tetap tersimpan di HP (per kode siswa) dan dikirim ke server saat online; pengiriman ulang tidak membuat data ganda.
+- **Jangan** memakai SQLite di Render gratis karena datanya bisa hilang (ARCHITECTURE §7). Di laptop, SQLite dipakai otomatis
+  (`backend/data/langkah.db`).
 - Region diatur ke Singapura (`render.yaml`) agar cepat dari Indonesia.

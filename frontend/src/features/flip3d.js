@@ -6,6 +6,7 @@ import { fmtNum, MINUS } from '../math/linear.js';
 import { markDone } from '../lib/store.js';
 
 export const title = 'Mengapa Tanda Dibalik?';
+export const nav = false;
 
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const lt = (r) => (r === '<' ? '&lt;' : '&gt;');

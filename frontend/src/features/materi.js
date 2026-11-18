@@ -5,16 +5,23 @@ import { statementHTML } from '../components/mathexpr.js';
 import { numberLineSVG, numberLineLegend } from '../components/numberline.js';
 import { esc } from '../lib/dom.js';
 import * as store from '../lib/store.js';
+import { icon } from '../components/icons.js';
+import { minibar } from '../components/ui.js';
 
 export const title = 'Materi';
+export const nav = (params) => !params[0];
+export const tab = 'materi';
 
 const lessonDone = (id) => store.isDone(`materi-${id}`);
 
 function renderIndex(el) {
   el.innerHTML = `<div class="screen">
-    <p class="lede">Baca materinya dulu, sedikit demi sedikit. Setiap subbab berisi beberapa layar pendek, dan ditutup satu pertanyaan cek pemahaman.</p>
-    ${CHAPTERS.map((c) => `<section class="module"><div class="module-head"><h3>${esc(c.title)}</h3>
+    <div class="card soft"><h3>${icon('book', 20)} Pahami dulu, sedikit demi sedikit</h3>
+      <p class="muted">Setiap subbab berisi beberapa layar pendek dan ditutup satu pertanyaan cek pemahaman.</p>
+      <a class="btn soft small" href="#/tutor">${icon('spark', 18)} Belum paham? Minta Tutor AI menjelaskan</a></div>
+    ${CHAPTERS.map((c, ci) => `<section class="module"><div class="module-head"><span class="m-ic">${icon(['scale', 'numline', 'layers'][ci] || 'book', 18)}</span><h3>${esc(c.title)}</h3>
       <span class="module-state">${c.lessons.filter((l) => lessonDone(l.id)).length}/${c.lessons.length}</span></div>
+      ${minibar(Math.round((100 * c.lessons.filter((l) => lessonDone(l.id)).length) / c.lessons.length))}
       <ul class="acts">${c.lessons.map((l, i) => `<li><a class="act${lessonDone(l.id) ? ' done' : ''}" href="#/materi/${l.id}">
         <span class="dot">${lessonDone(l.id) ? '✓' : ''}</span><span class="lbl">${i + 1}. ${esc(l.title)}</span>
         <span class="badge">${l.pages.length} layar</span></a></li>`).join('')}</ul></section>`).join('')}

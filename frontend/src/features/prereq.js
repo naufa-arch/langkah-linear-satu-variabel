@@ -6,6 +6,7 @@ import { esc } from '../lib/dom.js';
 import * as store from '../lib/store.js';
 
 export const title = 'Cek Prasyarat';
+export const nav = false;
 
 export function mount(el) {
   let qs, picks, i, mode, reviewCat, reviewPage;

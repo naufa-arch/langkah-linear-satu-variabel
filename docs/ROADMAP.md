@@ -24,9 +24,11 @@ Disusun agar selaras dengan model pengembangan (misalnya ADDIE). Sesuaikan jika 
 | S3 ◐ | `mathexpr`, `numberline`, F6 tahap 1 "Contoh bertahap" (PLSV & PtLSV + cek dengan angka), Kamus kata kunci | ✅ tahap 1 · ⬜ tahap 2–4 fading |
 | S4 ◐ | F2 Timbangan + blok aljabar 3D dan F3 Balik tanda 3D (Three.js lazy, render on demand); F6 (PtLSV) | ✅ versi 3D · ⬜ fallback 2D SVG · ⬜ uji ≥ 30 fps di HP |
 | S5 ✅ | F5 Pembedah Soal Cerita (6 langkah, 5 templat angka acak) + Kamus, F7 Cek Jawaban; F1 Cek Prasyarat + Ulasan Kilat; F6 tahap 4 Latihan Mandiri (3 tingkat, petunjuk bertingkat, deteksi miskonsepsi) | ✅ 48 tes lulus · ⬜ uji di HP |
-| S6 | Backend: model DB + Alembic, `/enroll`, `/events/batch`, `/survey/batch`; frontend: F8 Skala/angket, outbox + sinkronisasi | Uji mode pesawat → online: data masuk DB tanpa duplikat |
-| S7 | Backend: login peneliti, kelas, ekspor CSV, ringkasan pandas; frontend: F10 dasbor peneliti | CSV terbuka benar di Excel/Sheets |
+| S6 ◐ | Backend: model DB + Alembic, `/enroll`, `/events/batch`, `/survey/batch`; frontend: F8 Skala/angket, outbox + sinkronisasi | ✅ DB + Alembic, enroll, events/batch idempoten, outbox per siswa, tes literasi · ⬜ `/survey/batch` + F8 angket |
+| S7 ◐ | Backend: login peneliti, kelas, ekspor CSV, ringkasan pandas; frontend: F10 dasbor peneliti | ✅ login JWT, rekap per kelas, penskoran rubrik + saran AI, 3 ekspor CSV (;) · ⬜ uji buka di Excel |
 | S8 | Poles: aksesibilitas, mode gelap, Lighthouse, keamanan (CORS, rate limit), uji di HP nyata | Lolos anggaran kinerja & daftar cek keamanan |
+
+| v1.0 ✅ | Tampilan baru (dasbor, navigasi bawah, lencana), Tutor AI (DeepSeek/Gemini) berbasis RMT, 6 Langkah Berpikir RMT, Pembahasan bertahap, Evaluasi literasi, Hasil belajar, Profil, Capacitor Android | ✅ 73 tes lulus · ⬜ build APK di laptop dengan Android Studio · ⬜ uji di HP nyata |
 
 ## Fase 3 — Validasi & Uji Coba (Implementasi)
 - [ ] Validasi ahli materi & ahli media (lembar validasi)

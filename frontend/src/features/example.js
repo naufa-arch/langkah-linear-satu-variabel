@@ -5,6 +5,7 @@ import { numberLineSVG, numberLineLegend } from '../components/numberline.js';
 import { markDone } from '../lib/store.js';
 
 export const title = 'Contoh Bertahap';
+export const nav = false;
 
 const LABEL = { 'x+b=c': 'x + b ? c', 'ax=c': 'ax ? c', 'ax+b=c': 'ax + b ? c', 'ax+b=cx+d': 'ax + b ? cx + d', 'a(x+b)=c': 'a(x + b) ? c' };
 // soal pembuka sama dengan contoh di dokumen perencanaan

@@ -1,8 +1,9 @@
 # CLAUDE.md — Panduan untuk Claude Code di proyek *Langkah Linear*
 
 ## Apa proyek ini
-Aplikasi web (PWA) untuk siswa SMP Fase D yang mempelajari **PLSV & PtLSV**. Aplikasi dirancang berdasarkan
-**Cognitive Load Theory** untuk meningkatkan **literasi matematis**. Dibuat oleh mahasiswa S1 Pendidikan
+Aplikasi web (PWA) + Android (APK, Capacitor) untuk siswa SMP Fase D yang mempelajari **PLSV & PtLSV**. Model
+pembelajaran **Rigorous Mathematical Thinking (RMT)** dengan prinsip **Cognitive Load Theory** untuk meningkatkan
+**literasi matematis**. Dibuat oleh mahasiswa S1 Pendidikan
 Matematika sebagai produk penelitian pengembangan. Target utama: **HP Android kelas bawah, Chrome, sering offline**.
 
 Baca sebelum mengerjakan fitur:
@@ -12,16 +13,22 @@ Baca sebelum mengerjakan fitur:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): stack, struktur folder, model data, API, sinkronisasi
 - [docs/ANALISIS-KEBUTUHAN.md](docs/ANALISIS-KEBUTUHAN.md): temuan wawancara T1–T10
 - [docs/ROADMAP.md](docs/ROADMAP.md): sprint yang sedang berjalan
+- [docs/INSTRUMEN-LITERASI.md](docs/INSTRUMEN-LITERASI.md): instrumen penelitian (jangan diubah tanpa izin pengguna)
+- [docs/ANDROID.md](docs/ANDROID.md): build APK
 
 ## Stack: **Python + JavaScript** (keputusan pengguna, jangan diganti)
 - `frontend/`: **JavaScript murni (ES modules), tanpa build, tanpa Node.js.** CSS biasa, Three.js r160 lokal di `vendor/`, service worker buatan sendiri.
   **Jangan** menambah TypeScript, React, Vite, npm, atau langkah build apa pun tanpa izin pengguna.
-- `backend/`: Python 3.12 · FastAPI · pydantic-settings · pytest · mini-racer (V8, untuk menguji JS) · ruff · uv.
-  Menyusul di S6: SQLModel, Alembic, PostgreSQL, pandas.
+- `backend/`: Python 3.12 · FastAPI · pydantic-settings · SQLModel · Alembic · PostgreSQL (lokal: SQLite) · httpx · PyJWT ·
+  pytest · mini-racer (V8, untuk menguji JS) · ruff · uv.
+- Android: **Capacitor** di folder utama (`package.json`, `capacitor.config.json`, `android/`) HANYA sebagai pembungkus;
+  `webDir` = `frontend/` apa adanya. npm dipakai hanya untuk build APK, bukan untuk frontend.
 - FastAPI menyajikan API di `/api/v1/...` **dan** folder `frontend/` di `/`.
 
 **Pembagian tugas:** semua pembelajaran & mesin matematika ada di **frontend** (harus jalan offline).
-Backend Python **hanya** untuk menyimpan data penelitian, kode kelas, dasbor & ekspor peneliti.
+Backend Python untuk: data penelitian, dasbor & ekspor peneliti, kunci & rubrik instrumen literasi, dan **Tutor AI**
+(`/api/v1/ai/...`, DeepSeek; Gemini cadangan). Kunci API hanya di `.env`/environment server, tidak pernah di frontend.
+Jawaban soal buatan AI selalu dihitung ulang oleh server/mesin, bukan diambil dari AI.
 
 ## Perintah (jalankan dari folder `backend/`)
 ```
@@ -45,6 +52,9 @@ Catatan: service worker (offline) hanya aktif di `localhost` atau HTTPS, tidak a
 7. Teks untuk siswa ditulis dalam **Bahasa Indonesia** yang baku tetapi ramah, berupa kalimat pendek dengan istilah sesuai
    buku Kurikulum Merdeka (ruas, koefisien, konstanta, himpunan penyelesaian, semesta).
 8. Tulis simbol dengan karakter yang benar: `−` (U+2212), `≤`, `≥`, `×`, `÷`.
+9. **RMT**: 6 langkah berpikir di `src/content/rmt.js` (sama dengan `backend/app/ai/prompts.py`). Tutor AI membimbing
+   dengan pertanyaan pemandu dan tidak memberi jawaban akhir, kecuali mode `pembahasan`.
+10. Pre-test/post-test: tanpa AI, tanpa kunci, tanpa indikator yang tampil.
 
 ## Aturan teknis — frontend
 - File logika yang diuji di V8 (`src/math/*.js`, `src/content/keywords.js`, `src/content/stories.js`) hanya boleh memakai
@@ -55,6 +65,9 @@ Catatan: service worker (offline) hanya aktif di `localhost` atau HTTPS, tidak a
 - Setiap layar adalah modul di `src/features/` yang mengekspor `title` dan `mount(el, params)`, dan mengembalikan fungsi pembersih.
   Daftarkan rutenya di `src/main.js` dan aktivitasnya di `src/content/modules.js`.
 - **Setiap berkas baru di `frontend/` wajib ditambahkan ke `PRECACHE` di `sw.js`**; naikkan `VERSION`. Ada tes yang gagal bila lupa.
+- Layar boleh mengekspor `nav` (false/fungsi) untuk menyembunyikan navigasi bawah di layar belajar yang butuh fokus.
+- Penyimpanan per siswa lewat `lib/store.js` (profil per kode kelas + kode siswa). Catat kejadian penelitian dengan
+  `store.log(kind, data)`; `lib/sync.js` mengirimnya ke `/events/batch`.
 - Mobile-first, mulai dari lebar 360 px. Target sentuh ≥ 48 dp. Hormati `prefers-reduced-motion` dan setelan "Kurangi gerakan".
 - Jangan memanggil CDN eksternal saat runtime; font & Three.js disimpan lokal.
 - **3D** mengikuti DESIGN §8:

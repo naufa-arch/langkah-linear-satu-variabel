@@ -1,0 +1,22 @@
+{
+  "name": "langkah-linear-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pembungkus Android (Capacitor) untuk aplikasi Langkah Linear. Frontend tetap JavaScript tanpa build (folder frontend/).",
+  "scripts": {
+    "android:add": "cap add android",
+    "android:assets": "capacitor-assets generate --android --iconBackgroundColor \"#2457C5\" --iconBackgroundColorDark \"#2457C5\" --splashBackgroundColor \"#2457C5\" --splashBackgroundColorDark \"#14161A\"",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/splash-screen": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.6.0"
+  }
+}

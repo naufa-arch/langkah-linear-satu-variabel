@@ -7,6 +7,7 @@ import { sideHTML } from '../components/mathexpr.js';
 import { markDone } from '../lib/store.js';
 
 export const title = 'Timbangan Aljabar';
+export const nav = false;
 
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 

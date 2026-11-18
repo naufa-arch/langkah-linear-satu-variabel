@@ -67,6 +67,7 @@ def test_v8_tested_files_use_single_line_imports() -> None:
     for f in (
         "src/math/linear.js",
         "src/math/practice.js",
+        "src/math/progress.js",
         "src/content/keywords.js",
         "src/content/stories.js",
     ):

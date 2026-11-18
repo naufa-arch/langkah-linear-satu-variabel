@@ -1,36 +1,56 @@
-/* Token desain — docs/DESIGN.md §2. Komponen hanya boleh memakai token ini. */
+/* Token desain — docs/DESIGN.md §2. Komponen hanya boleh memakai token ini.
+   Makna warna tetap: x = biru, konstanta = ungu, tanda/kata kunci = oranye, tidak ada merah. */
 @font-face { font-family: "Atkinson Hyperlegible"; src: url("../../fonts/atkinson-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url("../../fonts/atkinson-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url("../../fonts/atkinson-700-italic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
 
 :root {
   color-scheme: light;
-  --bg: #FAFAF7; --surface: #FFFFFF; --stage: #ECEFE8; --line: #D9DDD3;
-  --text: #1F2328; --muted: #5B6470; --primary: #2457C5; --on-primary: #FFFFFF;
+  --bg: #F4F6FB; --surface: #FFFFFF; --surface-2: #F8F9FD; --stage: #EAEFF7; --line: #DCE2EE;
+  --text: #1A2233; --muted: #5A6478; --primary: #2457C5; --primary-2: #4B3FD0; --on-primary: #FFFFFF;
+  --primary-soft: #E5ECFC;
   --var: #2457C5; --on-var: #FFFFFF; --const: #6B4FA0; --on-const: #FFFFFF;
   --sign: #C2410C; --sign-bg: #FBE6D8;
   --ok: #1A7F45; --ok-bg: #E2F2E7; --warn: #A15C00; --warn-bg: #FAEED6;
+  --teal: #0E7C86; --teal-bg: #DDF3F4; --gold: #B7791F; --gold-bg: #FCF1D9;
   --metal: #8E938A; --axis: #3B4048;
+  --grad: linear-gradient(135deg, #2457C5 0%, #4B3FD0 100%);
+  --grad-soft: linear-gradient(135deg, #E9EFFD 0%, #EEEAFD 100%);
+  --shadow-sm: 0 1px 2px rgba(20, 32, 64, .06), 0 1px 3px rgba(20, 32, 64, .05);
+  --shadow: 0 2px 6px rgba(20, 32, 64, .06), 0 8px 24px rgba(20, 32, 64, .07);
   --font: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --radius: 14px;
+  --radius: 18px;
+  --nav-h: 64px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #14161A; --surface: #1E2127; --stage: #191C21; --line: #30353D;
-    --text: #E8EAED; --muted: #A3ABB5; --primary: #7FA6FF; --on-primary: #0D1830;
+    --bg: #10131A; --surface: #1A1F29; --surface-2: #161A23; --stage: #171C25; --line: #2C3340;
+    --text: #E8EBF1; --muted: #A3ACBB; --primary: #7FA6FF; --primary-2: #A99BFF; --on-primary: #0D1830;
+    --primary-soft: #1E2A45;
     --var: #7FA6FF; --on-var: #0D1830; --const: #B9A3E8; --on-const: #1C1430;
     --sign: #FDBA74; --sign-bg: #3A2617;
     --ok: #6EE7A0; --ok-bg: #13301F; --warn: #FBBF24; --warn-bg: #352812;
+    --teal: #5EEAD4; --teal-bg: #11302F; --gold: #F6C453; --gold-bg: #33290F;
     --metal: #6C727A; --axis: #C9CED6;
+    --grad: linear-gradient(135deg, #2B4FA8 0%, #4A3EB0 100%);
+    --grad-soft: linear-gradient(135deg, #1A2340 0%, #221D3D 100%);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow: 0 2px 8px rgba(0, 0, 0, .35);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #14161A; --surface: #1E2127; --stage: #191C21; --line: #30353D;
-  --text: #E8EAED; --muted: #A3ABB5; --primary: #7FA6FF; --on-primary: #0D1830;
+  --bg: #10131A; --surface: #1A1F29; --surface-2: #161A23; --stage: #171C25; --line: #2C3340;
+  --text: #E8EBF1; --muted: #A3ACBB; --primary: #7FA6FF; --primary-2: #A99BFF; --on-primary: #0D1830;
+  --primary-soft: #1E2A45;
   --var: #7FA6FF; --on-var: #0D1830; --const: #B9A3E8; --on-const: #1C1430;
   --sign: #FDBA74; --sign-bg: #3A2617;
   --ok: #6EE7A0; --ok-bg: #13301F; --warn: #FBBF24; --warn-bg: #352812;
+  --teal: #5EEAD4; --teal-bg: #11302F; --gold: #F6C453; --gold-bg: #33290F;
   --metal: #6C727A; --axis: #C9CED6;
+  --grad: linear-gradient(135deg, #2B4FA8 0%, #4A3EB0 100%);
+  --grad-soft: linear-gradient(135deg, #1A2340 0%, #221D3D 100%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow: 0 2px 8px rgba(0, 0, 0, .35);
 }

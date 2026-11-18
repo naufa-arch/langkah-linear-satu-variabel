@@ -8,6 +8,7 @@ import { esc } from '../lib/dom.js';
 import { markDone } from '../lib/store.js';
 
 export const title = 'Pembedah Soal Cerita';
+export const nav = false;
 
 const STEPS = ['Pilah kalimat', 'Misalkan x', 'Kata kunci & tanda', 'Susun model', 'Selesaikan', 'Tafsirkan'];
 const kwOf = (rel) => KEYWORDS.find((k) => k.rel === rel);

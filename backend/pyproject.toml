@@ -4,8 +4,13 @@ version = "0.1.0"
 description = "API pengumpul data penelitian untuk aplikasi Langkah Linear"
 requires-python = ">=3.12,<3.14"
 dependencies = [
+    "alembic>=1.14",
     "fastapi[standard]>=0.115",
+    "httpx>=0.28",
+    "psycopg[binary]>=3.2",
     "pydantic-settings>=2.6",
+    "pyjwt>=2.10",
+    "sqlmodel>=0.0.22",
 ]
 
 [dependency-groups]
@@ -22,6 +27,7 @@ pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["alembic/versions"]
 target-version = "py312"
 
 [tool.ruff.lint]
@@ -30,3 +36,9 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # tes mesin matematika memuat potongan kode JavaScript yang memang panjang
 "tests/test_math_engine.py" = ["E501"]
+# teks instruksi AI sengaja ditulis per kalimat
+"app/ai/prompts.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+known-third-party = ["alembic"]

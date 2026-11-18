@@ -17,6 +17,7 @@ FRONTEND = Path(__file__).resolve().parents[2] / "frontend" / "src"
 JS_FILES = (
     "math/linear.js",
     "math/practice.js",
+    "math/progress.js",
     "content/keywords.js",
     "content/stories.js",
     "components/mathexpr.js",
@@ -315,3 +316,66 @@ def test_lesson_worked_answers_match_text(js):
     for prob, (rel, n, d) in cases.items():
         s = js(f"solve({prob})")
         assert (s["rel"], s["value"]["n"], s["value"]["d"]) == (rel, n, d), prob
+
+
+# ---------- progres, lencana, tingkat adaptif (math/progress.js) ----------
+def _ev(ok, attempt=1, level="sedang", hints=0, code=None, ts="2026-11-18T08:00:00Z"):
+    return {
+        "kind": "latihan.jawab",
+        "ts": ts,
+        "data": {"ok": ok, "attempt": attempt, "level": level, "hints": hints, "code": code},
+    }
+
+
+def test_practice_stats_counts_first_attempts_and_streak(js):
+    hist = [_ev(True), _ev(True), _ev(False, code="M2"), _ev(True), _ev(True), _ev(True)]
+    s = js(f"practiceStats({json.dumps(hist)})")
+    assert s["tried"] == 6 and s["firstOk"] == 5 and s["accuracy"] == 83
+    assert s["bestStreak"] == 3
+    assert s["misconceptions"] == {"M2": 1}
+    assert js("practiceStats([])")["accuracy"] is None
+
+
+def test_adaptive_level_moves_up_and_down(js):
+    strong = [_ev(True) for _ in range(6)]
+    weak = [_ev(False) for _ in range(6)]
+    assert js(f"adaptiveLevel({json.dumps(strong)}, 'sedang')")["level"] == "sulit"
+    assert js(f"adaptiveLevel({json.dumps(weak)}, 'sedang')")["level"] == "mudah"
+    assert js(f"adaptiveLevel({json.dumps(strong)}, 'sulit')")["level"] == "sulit"
+    # benar tetapi memakai petunjuk tidak dihitung kuat
+    hinted = [_ev(True, hints=2) for _ in range(6)]
+    assert js(f"adaptiveLevel({json.dumps(hinted)}, 'sedang')")["level"] == "mudah"
+    # terlalu sedikit data: tetap
+    assert js(f"adaptiveLevel({json.dumps(strong[:3])}, 'mudah')")["level"] == "mudah"
+
+
+def test_streak_days(js):
+    hist = [
+        {"kind": "x", "ts": f"2026-11-{d}T10:00:00Z", "data": {}} for d in ("18", "17", "16", "14")
+    ]
+    assert js(f"streakDays({json.dumps(hist)}, '2026-11-18')") == 3
+    assert js(f"streakDays({json.dumps(hist)}, '2026-11-19')") == 3  # hari ini belum belajar
+    assert js(f"streakDays({json.dumps(hist)}, '2026-11-21')") == 0
+
+
+def test_overall_progress_and_badges(js):
+    mods = [
+        {
+            "acts": [
+                {"id": "a", "route": "#/a"},
+                {"id": "b", "route": "#/b"},
+                {"id": "c", "route": None},
+            ]
+        }
+    ]
+    assert js(f"overallProgress({json.dumps(mods)}, {{a: 'done'}})") == {
+        "done": 1,
+        "total": 2,
+        "pct": 50,
+    }
+    b = js(
+        "badges({progress: {'cek-prasyarat': 'done'}, stats: {tried: 5, firstOk: 5, bestStreak: 5}, streak: 1})"
+    )
+    earned = {x["id"] for x in b if x["earned"]}
+    assert {"mulai", "prasyarat", "latih5", "runtun5"} <= earned
+    assert "latih20" not in earned and "rmt" not in earned

@@ -1,12 +1,17 @@
 // F6 tahap 4: Latihan mandiri dengan angka acak, petunjuk bertingkat, dan umpan balik miskonsepsi.
 import { practiceProblem, hintFor } from '../math/practice.js';
-import { solve, diagnose, evalSide, toInterval, fmtNum, relSymbol, holds, generate } from '../math/linear.js';
+import { solve, diagnose, evalSide, toInterval, fmtNum, relSymbol, holds, generate, fmtStatement } from '../math/linear.js';
 import { statementHTML, relHTML } from '../components/mathexpr.js';
 import { numberLineSVG, numberLineLegend } from '../components/numberline.js';
 import { esc } from '../lib/dom.js';
 import * as store from '../lib/store.js';
+import { adaptiveLevel } from '../math/progress.js';
+import { icon } from '../components/icons.js';
+import { openTutor } from './tutor.js';
+import { openPembahasan } from './pembahasan.js';
 
 export const title = 'Latihan Mandiri';
+export const tab = 'latihan';
 
 const LEVEL_LABEL = { mudah: 'Mudah', sedang: 'Sedang', sulit: 'Sulit' };
 const TYPE_LABEL = { PLSV: 'Persamaan', PtLSV: 'Pertidaksamaan', campur: 'Campur' };
@@ -23,7 +28,7 @@ export function mount(el) {
   let level = saved.level || 'sedang';
   let type = saved.type || 'campur';
   const score = { tried: saved.tried || 0, correct: saved.correct || 0, streak: 0 };
-  let p, sol, input, rel, attempts, hint, result, lastMsg;
+  let p, sol, input, rel, attempts, hint, result, lastMsg, suggestion = null, lastAnswer = null;
 
   function save() { store.set({ practice: { level, type, tried: score.tried, correct: score.correct } }); }
   function next(sameForm) {
@@ -31,7 +36,7 @@ export function mount(el) {
     // soal kembar = bentuk & jenis yang sama, angka berbeda (PRD F6)
     p = sameForm ? generate(p.form, { type: p.type, seed }) : practiceProblem(level, type, seed);
     sol = solve(p);
-    input = ''; rel = p.type === 'PLSV' ? '=' : null; attempts = 0; hint = 0; result = null; lastMsg = '';
+    input = ''; rel = p.type === 'PLSV' ? '=' : null; attempts = 0; hint = 0; result = null; lastMsg = ''; lastAnswer = null;
     render();
   }
 
@@ -71,7 +76,15 @@ export function mount(el) {
       ${result ? `<p class="fb" data-tone="${ok ? 'ok' : 'warn'}" aria-live="polite"><span class="ic">${ok ? '✓' : '!'}</span><span class="t">${lastMsg}</span></p>` : ''}
       ${nl}
       ${showSteps ? `<div class="hintbox"><p><b>Langkah penyelesaian</b></p><ol class="steps">${sol.steps.map((x) => `<li class="step${x.flipped ? ' flipped' : ''}"><div class="eq-line">${statementHTML(x.after)}</div><p class="why">${x.reason}</p></li>`).join('')}</ol></div>` : hintHTML()}
+      ${ok && suggestion ? `<div class="card soft"><p><b>${suggestion.reason === 'naik' ? '🎉 Kamu siap naik tingkat!' : 'Coba tingkat yang lebih ringan dulu'}</b></p>
+        <p class="muted">${suggestion.reason === 'naik' ? 'Jawabanmu banyak yang tepat tanpa petunjuk.' : 'Latihan dasar akan membantumu lebih yakin.'}</p>
+        <button class="btn soft small" type="button" data-level="${suggestion.level}">Pindah ke tingkat ${LEVEL_LABEL[suggestion.level]}</button></div>` : ''}
       ${ok ? '' : keypad()}
+      <div class="row2">
+        ${result === 'no' && lastAnswer ? `<button class="btn soft small" type="button" data-act="analyze">${icon('spark', 18)} Kenapa salah? (AI)</button>`
+          : `<button class="btn soft small" type="button" data-act="tutor">${icon('spark', 18)} Tanya Tutor AI</button>`}
+        <button class="btn small" type="button" data-act="discuss" ${ok || showSteps || attempts >= 1 ? '' : 'disabled'}>${icon('steps', 18)} Pembahasan</button>
+      </div>
       <div class="bottombar">
         ${ok ? '<button class="btn" type="button" data-act="twin">Soal mirip</button><button class="btn primary" type="button" data-act="new">Soal berikutnya ▶</button>'
              : showSteps ? '<button class="btn" type="button" data-act="new">Lewati</button><button class="btn primary" type="button" data-act="twin">Coba soal kembar ▶</button>'
@@ -84,6 +97,9 @@ export function mount(el) {
     const value = Number(input);
     const d = diagnose(p, { rel, value });
     attempts++;
+    lastAnswer = { rel, value };
+    store.log('latihan.jawab', { problem: { left: p.left, rel: p.rel, right: p.right }, type: p.type, form: p.form, level,
+      answer: { rel, value }, ok: d.ok, code: d.code, attempt: attempts, hints: hint });
     if (attempts === 1) score.tried++;
     if (d.ok) {
       result = 'ok';
@@ -92,6 +108,8 @@ export function mount(el) {
       lastMsg = attempts === 1 && hint === 0 ? 'Tepat!' : 'Tepat! Kamu berhasil menemukannya.';
       if (p.type === 'PtLSV') lastMsg += ` Himpunan penyelesaiannya {x | x ${relSymbol(sol.rel)} ${fmtNum(sol.value)}, x ∈ R}.`;
       if (score.correct >= 5) store.markDone('latihan');
+      const adv = adaptiveLevel(store.history(), level);
+      suggestion = adv.level !== level ? adv : null;
     } else {
       result = 'no';
       score.streak = 0;
@@ -114,7 +132,7 @@ export function mount(el) {
     const b = e.target.closest('button');
     if (!b) return;
     const d = b.dataset;
-    if (d.level) { level = d.level; save(); return next(); }
+    if (d.level) { level = d.level; suggestion = null; save(); return next(); }
     if (d.type) { type = d.type; save(); return next(); }
     if (d.relp) { rel = d.relp; if (result === 'no') result = null; return render(); }
     if (d.key) {
@@ -129,6 +147,13 @@ export function mount(el) {
       case 'hint': hint = Math.min(3, hint + 1); return render();
       case 'new': return next(false);
       case 'twin': return next(true);
+      case 'discuss': return openPembahasan({ left: p.left, rel: p.rel, right: p.right }, result === 'no' ? lastAnswer : null);
+      case 'tutor': return openTutor({ mode: 'petunjuk', label: fmtStatement(p), context: { soal: fmtStatement(p), jenis: p.type } });
+      case 'analyze': return openTutor({
+        mode: 'analisis', label: fmtStatement(p),
+        context: { soal: fmtStatement(p), jawaban_siswa: `x ${relSymbol(lastAnswer.rel)} ${fmtNum(lastAnswer.value)}`, jawaban_benar_jangan_disebut: `x ${relSymbol(sol.rel)} ${fmtNum(sol.value)}`, kode_miskonsepsi: diagnose(p, lastAnswer).code || '-' },
+        first: `Aku menjawab x ${relSymbol(lastAnswer.rel)} ${fmtNum(lastAnswer.value)}. Bagian mana yang salah?`,
+      });
       default:
     }
   };
